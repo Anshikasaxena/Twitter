@@ -252,7 +252,7 @@ defmodule Query do
 
     for elem <- people do
       # get their tweets
-      # elem = :"#{elem}_cssa"
+      elem = :"#{elem}_cssa"
       {_, _, _, sent_tweets} = :sys.get_state(elem)
       IO.inspect(sent_tweets)
       # check their tweets and collect their hashtags 

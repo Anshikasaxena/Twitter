@@ -19,9 +19,15 @@
 #One test case addition - what if someone subscribes to themselves 
 
 FUNCTIONALITY ADDITIONS
+
 ADD a check where a person can't subscribe to themselves 
+
 ADD a check while registering and tweeting if that username already exists - done by the engine 
+
 ADD password feature 
+
 ADD Live/not live functionality to processes
+
 ADD Got message such that it goes to the next line to take message 
+
 TODO - Try to move all functionaliies after login in main to the client process

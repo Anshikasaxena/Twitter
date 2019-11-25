@@ -446,6 +446,8 @@ defmodule Main do
   def main do
     task = String.trim(IO.gets("Want to Register or Login? \n"))
 
+    runSimulation()
+
     if task == "Register" do
       {_, tot_users, _, _} = :sys.get_state(:"#{Engine}_cssa")
       action = String.trim(IO.gets("Your name ? \n"))
@@ -527,6 +529,30 @@ defmodule Main do
     end
 
     main()
+  end
+
+  def runSimulation() do
+    # get number of users --> makeKids
+    # get number of fake tweets --> makeFakeTweets(num)
+    testTweets_db = []
+    testTweets = makeFakeTweets(100, testTweets_db)
+    IO.inspect(testTweets, label: "test Tweets")
+  end
+
+  def makeFakeTweets(num, testTweets_db) when num > 1 do
+    numm = Integer.to_string(num)
+    numtweet = String.replace_suffix("tweet x", " x", numm)
+    testTweet = "We are making a test tweet #{numtweet}"
+    testTweets_db = testTweets_db ++ [testTweet]
+    newNum = num - 1
+    makeFakeTweets(newNum, testTweets_db)
+  end
+
+  def makeFakeTweets(num, testTweets_db) do
+    numm = Integer.to_string(num)
+    numtweet = String.replace_suffix("tweet x", " x", numm)
+    testTweet = "We are making a test tweet #{numtweet}"
+    testTweets_db = testTweets_db ++ [testTweet]
   end
 end
 

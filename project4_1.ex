@@ -206,8 +206,9 @@ defmodule Retweet do
 
     if tweet != nil do
       tweet = elem(tweet, 1)
+      newTweet = "#I am retweeting: tweet #{tweet}"
       IO.inspect(tweet, label: "You Selected this tweet")
-      GenServer.call(id, {:tweet, tweet})
+      GenServer.call(id, {:tweet, newTweet})
     else
       IO.puts("can't find the tweet you want to retweet")
     end
@@ -347,6 +348,88 @@ defmodule Feed do
   end
 end
 
+defmodule Delete do
+  def deleteUser(id) do
+    # IO.inspect(state, label: "State")
+    answer = Mix.Shell.IO.prompt("Are you sure you would like to delete your account?")
+
+    case answer do
+      "Yes\n" ->
+        # if checkPassword passes
+        userName = id
+        # password = Enum.at(state, 1)
+        # enteredpassword1 = Mix.Shell.IO.prompt("Please Enter Your Password:")
+        # enteredpassword = String.trim(enteredpassword1)
+
+        # if password == enteredpassword do
+        deleteConfirm(userName)
+
+      # else
+      #   IO.puts("Incorrect password")
+      # end
+
+      "yes\n" ->
+        # if checkPassword passes
+        userName = id
+        # password = Enum.at(state, 1)
+        # enteredpassword1 = Mix.Shell.IO.prompt("Please Enter Your Password:")
+        # enteredpassword = String.trim(enteredpassword1)
+
+        # if password == enteredpassword do
+        deleteConfirm(userName)
+
+        # else
+        #   IO.puts("Incorrect password")
+        # end
+
+        # "No\n" ->
+        #   showMainMenu(state)
+        #
+        # "no\n" ->
+        #   showMainMenu(state)
+    end
+  end
+
+  def deleteConfirm(state) do
+    confirm = Mix.Shell.IO.prompt("Final confirmation. Delete Account?")
+
+    case confirm do
+      "Yes\n" ->
+        # delete from supervisor and log out
+        # deleteFromSupervisor(state)
+        deleteFromCSA(state)
+        deleteFromCSSA(state)
+
+      "yes\n" ->
+        # deleteFromSupervisor(state)
+        deleteFromCSA(state)
+        deleteFromCSSA(state)
+
+        # "No\n" ->
+        #   showMainMenu(state)
+        #
+        # "no\n" ->
+        #   showMainMenu(state)
+    end
+  end
+
+  def deleteFromCSA(state) do
+    # dpid = Process.whereis(DySupervisor)
+    # # val = Process.alive?(dpid)
+    # userName = Enum.at(state, 0)
+    # pid = GenServer.whereis(:"#{userName}")
+    # IO.inspect(pid, label: "deleting child")
+    # DynamicSupervisor.terminate_child(dpid, pid)
+    # IO.puts("Account Deleted From Supervisor.")
+  end
+
+  def deleteFromCSSA(state) do
+    # # find account in engine
+    # GenServer.cast(Engine, {:removeUser, state})
+    # IO.puts("Account Deleted From Engine.")
+  end
+end
+
 # Main
 defmodule Main do
   def main_task do
@@ -411,6 +494,10 @@ defmodule Main do
 
         if job == "Retweet" do
           Retweet.retweet(pid_sender)
+        end
+
+        if job == "Delete" do
+          Delete.deleteUser(pid_sender)
         end
 
         if job == "Query" do

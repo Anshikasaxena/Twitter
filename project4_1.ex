@@ -532,11 +532,16 @@ defmodule Main do
   end
 
   def runSimulation() do
-    # get number of users --> makeKids
-    # get number of fake tweets --> makeFakeTweets(num)
+    # get number of users --> makeKids(numUsers)
+    # get number of fake tweets --> makeFakeTweets(numTweets)
     testTweets_db = []
     testTweets = makeFakeTweets(100, testTweets_db)
     IO.inspect(testTweets, label: "test Tweets")
+    # subscribe
+    # sends that many tweets per user
+    # re-tweet
+    # query
+    # feed
   end
 
   def makeFakeTweets(num, testTweets_db) when num > 1 do

@@ -12,7 +12,7 @@ defmodule DySupervisor do
 
     # child_spec_2 = Supervisor.child_spec({Engine, [tweets, people, name]}, restart: :temporary)
 
-    # Start CSA 
+    # Start CSA
     {:ok, child} = DynamicSupervisor.start_child(__MODULE__, child_spec)
     # Start CSSA ####### NOT SURE ###########
     # {:ok, child} = DynamicSupervisor.start_child(__MODULE__, child_spec_2)
@@ -37,7 +37,7 @@ defmodule CSA do
   end
 
   def init(name) do
-    # Trigger the CSSA 
+    # Trigger the CSSA
 
     {:ok, name}
   end
@@ -68,7 +68,7 @@ defmodule CSA do
   end
 end
 
-# Started by main 
+# Started by main
 defmodule Engine do
   use GenServer
 
@@ -91,7 +91,7 @@ defmodule Engine do
   def handle_call({:register, name, pass}, _from, {followers, subscribed, feed, tweets}) do
     subscribed = subscribed ++ [name]
     followers = followers ++ [{:"#{name}", pass}]
-    # Register.get_people(name,people)#HERE everyone is on everyone's list 
+    # Register.get_people(name,people)#HERE everyone is on everyone's list
     {:reply, {followers, subscribed, feed, tweets}, {followers, subscribed, feed, tweets}}
   end
 
@@ -124,6 +124,10 @@ defmodule Engine do
     {:reply, {followers, subscribed, feed, tweets}, {followers, subscribed, feed, tweets}}
   end
 
+  def handle_call({:get_feed}, _from, {followers, subscribed, feed, tweets}) do
+    {:reply, feed, {followers, subscribed, feed, tweets}}
+  end
+
   def handle_call({:get_my_feed, new_feed}, _from, {followers, subscribed, feed, tweets}) do
     feed = feed ++ new_feed
     IO.inspect(feed, label: "The feed now inside looks like")
@@ -134,17 +138,17 @@ end
 
 defmodule Register do
   def reg(name, pass) do
-    # start a process with the given name - CSA  
+    # start a process with the given name - CSA
     DySupervisor.start_child(name)
 
-    # Start the CSSA 
+    # Start the CSSA
     tweets = []
     followers = []
     subscribed = []
     feed = []
     Engine.start_link([followers, subscribed, feed, tweets, name])
 
-    # Get the name on subscribed list  lst 
+    # Get the name on subscribed list  lst
     # Get password name key word pair list in place of followers
     pid = :"#{Engine}_cssa"
     {new_key_pass, new_subscribed, _, _} = GenServer.call(pid, {:register, name, pass})
@@ -160,14 +164,14 @@ defmodule Subscribe do
     pid_from = :"#{from}_cssa"
     pid_to = :"#{to}_cssa"
 
-    # Put your name in the followers list of the person followed 
+    # Put your name in the followers list of the person followed
     {new_followers, _, _, _} = GenServer.call(pid_to, {:populate, pid_from})
 
     IO.inspect(new_followers,
       label: "The followers in the person you subscribed to has your name !"
     )
 
-    # Put their name in your subscribed list 
+    # Put their name in your subscribed list
     {_, new_subscribed, _, _} = GenServer.call(pid_from, {:subscribed, pid_to})
     IO.inspect(new_subscribed, label: "you have subscribed to #{to}")
   end
@@ -177,7 +181,7 @@ defmodule Retweet do
   def retweet(my_id) do
     id = :"#{my_id}_cssa"
     {_, _, my_feed, _} = :sys.get_state(id)
-    # convert the list to a keyword list 
+    # convert the list to a keyword list
     c = 0
     lst = []
 
@@ -191,7 +195,7 @@ defmodule Retweet do
     IO.inspect(my_new_feed, label: "Your feed")
     re_tweet = String.trim(IO.gets("Select a tweet from your list of tweets \n"))
     select = :"#{re_tweet}"
-    # Not checked if this works 
+    # Not checked if this works
     IO.inspect(select, label: "You Selected #{select}")
     tweet = List.keyfind(my_new_feed, select, 0)
 
@@ -207,14 +211,14 @@ end
 
 defmodule Tweet do
   def send_tweet(sender, tweet) do
-    # Tell the process of sender about the tweet 
+    # Tell the process of sender about the tweet
     pid_sender = :"#{sender}_cssa"
     new_tweets = GenServer.call(pid_sender, {:tweet, tweet})
     IO.inspect(new_tweets, label: "My #{sender} tweets now")
   end
 
   def distribute_it(tweet, people) do
-    # Tell the engine to distribute the tweet 
+    # Tell the engine to distribute the tweet
     # pid = :"#{Engine}_cssa"
     # :ok = GenServer.call(pid, {:distribute, tweet, people})
     for elem <- people do
@@ -226,11 +230,38 @@ defmodule Tweet do
 end
 
 defmodule Query do
+  def get_my_results(query, my_id) do
+    queryLength = String.length(query)
+
+    if(queryLength == 0 || query == " ") do
+      IO.puts("You cannot query an empty string")
+      :EmptyQuery
+    else
+      id = :"#{my_id}_cssa"
+      feedList = GenServer.call(id, {:get_feed})
+      IO.inspect(feedList, label: "feedList")
+
+      # # for every value in the feedlist, search the tweet than search the username
+      # # if something interesting is found append it to results
+      #
+      results = []
+
+      results =
+        for tweet <- feedList do
+          _r =
+            if(String.contains?(tweet, query) == true) do
+              IO.inspect(tweet, label: "Found")
+              _results = results ++ tweet
+            end
+        end
+    end
+  end
+
   def get_my_feed(my_id) do
     # Get the list of subscribers
     id = :"#{my_id}_cssa"
     {_, my_subscribed, _, _} = :sys.get_state(id)
-    # Get each Subscribers tweets list and add it to my feed list 
+    # Get each Subscribers tweets list and add it to my feed list
     IO.inspect(my_subscribed, label: "These are the list of people i subscribed")
 
     for elem <- my_subscribed do
@@ -258,7 +289,7 @@ defmodule Query do
       elem = :"#{elem}_cssa"
       {_, _, _, sent_tweets} = :sys.get_state(elem)
       IO.inspect(sent_tweets)
-      # check their tweets and collect their hashtags 
+      # check their tweets and collect their hashtags
       list_of_tweets =
         Enum.reduce(sent_tweets, [], fn x, lst ->
           if String.contains?(x, hashtag) do
@@ -287,7 +318,7 @@ defmodule Query do
       # get their tweets
       elem = :"#{elem}_cssa"
       {_, _, _, sent_tweets} = :sys.get_state(elem)
-      # check their tweets and collect their hashtags 
+      # check their tweets and collect their hashtags
       list_of_tweets =
         Enum.reduce(sent_tweets, [], fn x, lst ->
           if String.contains?(x, mention) do
@@ -303,7 +334,15 @@ defmodule Query do
   end
 end
 
-# Main 
+defmodule Feed do
+  def showfeed(sender) do
+    id = :"#{sender}_cssa"
+    user_feed = GenServer.call(id, {:get_feed})
+    IO.inspect(user_feed, label: "Your feed is ")
+  end
+end
+
+# Main
 defmodule Main do
   def main_task do
     # Start the supervisor \
@@ -337,18 +376,18 @@ defmodule Main do
       sender = String.trim(IO.gets("And your username is ? \n"))
 
       if sender in tot_users do
-        # After checking show 
+        # After checking show
         IO.puts("Welcome!")
         pid_sender = :"#{sender}"
 
         job =
           String.trim(
-            IO.gets("What wouid you like to do - Tweet , Subscribe, Retweet or Query? \n")
+            IO.gets("What wouid you like to do - Tweet , Subscribe, Retweet,Feed or Query? \n")
           )
 
-        # Need more jobs to do 
+        # Need more jobs to do
         if job == "Tweet" do
-          # TODO _Add next line argument 
+          # TODO _Add next line argument
           tweet = String.trim(IO.gets("What's on your mind? \n"))
           GenServer.call(pid_sender, {:tweet, tweet})
         end
@@ -357,7 +396,7 @@ defmodule Main do
           tot_users = tot_users -- [sender]
           IO.inspect(tot_users, label: "People you can subscribe")
           subs = String.trim(IO.gets("Who do you want to subscribe to? \n"))
-          # CHeck if subs exist in system 
+          # CHeck if subs exist in system
           if subs in tot_users do
             GenServer.call(pid_sender, {:subscribe, subs})
           else
@@ -373,7 +412,7 @@ defmodule Main do
           query = String.trim(IO.gets("What is your query:  Tweets , @mentions or #hashtags? \n"))
 
           if query == "Tweets" do
-            Query.get_my_feed(pid_sender)
+            Query.get_my_results(pid_sender)
           end
 
           if query == "#hashtags" do
@@ -385,6 +424,10 @@ defmodule Main do
             mention = String.trim(IO.gets("Whose mention are you looking for? \n"))
             GenServer.call(pid_sender, {:mention, mention})
           end
+        end
+
+        if job == "Feed" do
+          Feed.showfeed(pid_sender)
         end
       else
         IO.puts("Wrong username or password")

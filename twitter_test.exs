@@ -22,7 +22,7 @@ defmodule TwitterTest do
       Register.reg("isabel", "p")
     end
 
-    test "The registered users have corresponding Engine processes  " do
+    test "The registered users have corresponding Engine processes (CSSA)" do
       names = Register.children()
       #   IO.inspect(names)
       assert length(names) == 4
@@ -42,6 +42,12 @@ defmodule TwitterTest do
 
       assert anshika_followers == [:"#{pid_from}_cssa"]
       assert isabel_subscribed == [:"#{pid_to}_cssa"]
+    end
+
+    test "User can't subscribe to itself" do
+      name1 = "isabel"
+      pid_from = :"#{name1}"
+      Subscribe.subscribe(pid_from, name1)
     end
   end
 

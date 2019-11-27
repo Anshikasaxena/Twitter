@@ -247,19 +247,26 @@ defmodule Subscribe do
     # IO.puts("Lets start subscribin !")
     pid_from = :"#{from}_cssa"
     pid_to = :"#{to}_cssa"
+    sender = Atom.to_string(from)
+    {_, tot_users, _, _} = :sys.get_state(:"#{Engine}_cssa")
+    tot_users = tot_users -- [sender]
 
-    # Put your name in the followers list of the person followed
-    {new_followers, _, _, new_tweets} = GenServer.call(pid_to, {:populate, pid_from})
+    if to in tot_users do
+      # Put your name in the followers list of the person followed
+      {new_followers, _, _, new_tweets} = GenServer.call(pid_to, {:populate, pid_from})
 
-    IO.inspect(new_followers,
-      label: "The followers in the person you subscribed to has your name !"
-    )
+      IO.inspect(new_followers,
+        label: "The followers in the person you subscribed to has your name !"
+      )
 
-    # Put their name in your subscribed list
-    {_, new_subscribed, _, _} = GenServer.call(pid_from, {:subscribed, pid_to, new_tweets})
-    IO.inspect(new_subscribed, label: "you have subscribed to #{to}")
+      # Put their name in your subscribed list
+      {_, new_subscribed, _, _} = GenServer.call(pid_from, {:subscribed, pid_to, new_tweets})
+      IO.inspect(new_subscribed, label: "you have subscribed to #{to}")
 
-    {new_followers, new_subscribed}
+      {new_followers, new_subscribed}
+    else
+      IO.puts("You can't subscribe to that id")
+    end
   end
 
   def subscribeMany(num_user) do
